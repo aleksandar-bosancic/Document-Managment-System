@@ -5,9 +5,9 @@
 export const environment = {
   production: false,
   keycloak: {
-    issuer: 'http://localhost:8080',
+    issuer: 'https://localhost:8443',
     realm: 'dms',
-    clientId: 'frontend-managment'
+    clientId: 'frontend-management'
   }
 };
 

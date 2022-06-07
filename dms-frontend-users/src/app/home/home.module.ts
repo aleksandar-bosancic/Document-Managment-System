@@ -9,21 +9,24 @@ import {KeycloakBearerInterceptor} from "keycloak-angular";
 
 
 @NgModule({
-  declarations: [
-    HomeComponent
-  ],
-  imports: [
-    CommonModule,
-    HomeRoutingModule,
-    AppMaterialModule,
-    HttpClientModule
-  ],
-  providers: [
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: KeycloakBearerInterceptor,
-      multi: true
-    }
-  ]
+    declarations: [
+        HomeComponent
+    ],
+    imports: [
+        CommonModule,
+        HomeRoutingModule,
+        AppMaterialModule,
+        HttpClientModule
+    ],
+    exports: [
+        HomeComponent
+    ],
+    providers: [
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: KeycloakBearerInterceptor,
+            multi: true
+        }
+    ]
 })
 export class HomeModule { }

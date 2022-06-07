@@ -7,7 +7,7 @@ export const environment = {
   keycloak: {
     issuer: 'https://localhost:8443',
     realm: 'dms',
-    clientId: 'dms-application-client-documents'
+    clientId: 'frontend-documents'
   }
 };
 

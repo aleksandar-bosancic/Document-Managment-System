@@ -16,7 +16,8 @@ export function initializeKeycloak(
         silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html'
       },
       enableBearerInterceptor: true,
-      bearerPrefix: 'Bearer'
+      bearerPrefix: 'Bearer',
+      loadUserProfileAtStartUp: true
     });
 }
 

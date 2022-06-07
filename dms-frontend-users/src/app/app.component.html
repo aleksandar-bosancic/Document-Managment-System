@@ -1,3 +1,13 @@
-<h1>Users</h1>
-<a routerLink="/home">home</a>
+<mat-toolbar class="toolbar" color="primary">
+  <div>
+  </div>
+  <div>
+    <h2>DMS ADMINISTRATION</h2>
+  </div>
+  <div>
+    <button mat-icon-button (click)="logout()">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>
 <router-outlet></router-outlet>

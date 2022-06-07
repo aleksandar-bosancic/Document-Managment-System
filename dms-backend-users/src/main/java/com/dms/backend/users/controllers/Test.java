@@ -1,13 +1,22 @@
 package com.dms.backend.users.controllers;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
+import com.dms.backend.users.model.entities.User;
+import org.keycloak.adapters.springsecurity.client.KeycloakRestTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 @RestController
 public class Test {
-    @CrossOrigin
+    KeycloakRestTemplate keycloakRestTemplate;
+
+    public Test(KeycloakRestTemplate keycloakRestTemplate) {
+        this.keycloakRestTemplate = keycloakRestTemplate;
+    }
+
     @GetMapping("/test")
     public String test(){
         System.out.println("testing");
@@ -16,6 +25,9 @@ public class Test {
 
     @GetMapping("/test/kita")
     public String testkita(){
+        var list = keycloakRestTemplate.getForEntity("https://localhost:8443/admin/realms/dms/roles/application-client/users", User[].class);
+
+        System.out.println(list.getBody()[0]);
         return "test kita";
     }
 

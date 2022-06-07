@@ -9,14 +9,14 @@ export function initializeKeycloak(
       config: {
         url: environment.keycloak.issuer,
         realm: environment.keycloak.realm,
-        clientId: environment.keycloak.clientId
+        clientId: environment.keycloak.clientId,
       },
       initOptions: {
         onLoad: 'check-sso',
-        silentCheckSsoFallback: true,
-        silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html',
-        checkLoginIframe: true
-      }
+        silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html'
+      },
+      enableBearerInterceptor: true,
+      bearerPrefix: 'Bearer'
     });
 }
 

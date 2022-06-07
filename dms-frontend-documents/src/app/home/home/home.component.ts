@@ -18,4 +18,8 @@ export class HomeComponent implements OnInit {
   logout() {
     this.keycloakService.logout().then(() => this.keycloakService.clearToken());
   }
+
+  testIt() {
+    this.http.get('https://localhost:9000/test',{responseType: "text"}).subscribe(value => console.log(value));
+  }
 }
