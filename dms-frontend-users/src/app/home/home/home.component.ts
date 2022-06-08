@@ -1,7 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {KeycloakService} from "keycloak-angular";
 import {User} from "../../model/user";
-import {Observable} from "rxjs";
 import {UserService} from "../services/user.service";
 import {Attribute} from "../../model/attribute";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
@@ -14,19 +13,32 @@ import {AddUser} from "../../model/add-user";
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
-  public clients: User[] = [];
   public selectedUser = new SelectionModel<User>(false, []);
+  public selectedActions = new SelectionModel<string>(true, []);
+  public selectedRole = new SelectionModel<string>(false, []);
+
+  public clients: User[] = [];
   public documentAdmins: User[] = [];
+  public systemAdmins: User[] = [];
+
+  public selectedUserList: User[] = [];
+  public dataSource: User[] = [];
+
+  public userRoles: string[] = ['application-client', 'application-document-admin', 'application-system-admin'];
+  public userActions: string[] = ['create', 'remove', 'move', 'rename', 'upload', 'download', 'edit'];
+  public displayedColumns: string[] = ['username', 'firstName', 'lastName', 'email'];
+
   clientFormGroup: FormGroup = new FormGroup({});
-  displayedColumns = ['username', 'firstName', 'lastName', 'email'];
 
   constructor(private keycloakService: KeycloakService, private service: UserService,
               private formBuilder: FormBuilder) {
   }
 
   ngOnInit(): void {
-    this.loadClients()
+    this.loadUsers()
     this.selectedUser.changed.subscribe(s => this.userSelected())
+    this.selectedActions.changed.subscribe();
+    this.selectedRole.changed.subscribe(s => this.roleChanged(s.source.selected[0]));
     this.clientFormGroup = this.formBuilder.group({
       id: [null, Validators.required],
       username: [null],
@@ -34,26 +46,36 @@ export class HomeComponent implements OnInit {
       lastName: [null],
       email: [null],
       rootDirectory: [null],
-      allowedDomains: [null]
+      allowedDomains: ['*'],
+      actions: [null]
     })
   }
 
-  loadClients() {
-    this.service.getUsers().subscribe((result: any) => {
-      const data = result.map((element: any) => {
-
-        let attribute: Attribute = new Attribute(element.attributes.rootDirectory, element.attributes.allowedDomains);
-
+  loadUsers() {
+    this.service.getUsers('client').subscribe((result: any) => {
+      this.clients = result.map((element: any) => {
+        let attribute: Attribute = new Attribute(element.attributes?.rootDirectory, element.attributes?.allowedDomains, element.attributes?.actions);
         return new User(element.id, element.username, element.firstName, element.lastName, element.email, attribute);
       });
-      this.clients = data;
+    });
+    this.service.getUsers('system-admin').subscribe((result: any) => {
+      this.systemAdmins = result.map((element: any) => {
+        let attribute: Attribute = new Attribute(element.attributes?.rootDirectory, element.attributes?.allowedDomains, element.attributes?.actions);
+        return new User(element.id, element.username, element.firstName, element.lastName, element.email, attribute ?? null);
+      });
+    });
+    this.service.getUsers('document-admin').subscribe((result: any) => {
+      this.documentAdmins = result.map((element: any) => {
+        let attribute: Attribute = new Attribute(element.attributes?.rootDirectory, element.attributes?.allowedDomains, element.attributes?.actions);
+        return new User(element.id, element.username, element.firstName, element.lastName, element.email, attribute ?? null);
+      });
     });
   }
 
   delete() {
     if (this.selectedUser.selected[0] != null) {
       this.service.deleteUser(this.selectedUser.selected[0]).subscribe();
-      this.loadClients();
+      this.loadUsers();
     } else {
       alert('User not selected.');
     }
@@ -61,8 +83,36 @@ export class HomeComponent implements OnInit {
 
   update() {
     if (this.selectedUser.selected[0] != null) {
+      if (!this.isUserDataEmpty()) {
+        alert('User data can not be empty.');
+        return;
+      }
+      let user: User = this.selectedUser.selected[0];
+      let form = this.clientFormGroup;
+      user.username = form.controls['username'].value;
+      user.firstName = form.controls['firstName'].value;
+      user.lastName = form.controls['lastName'].value;
+      user.email = form.controls['email'].value;
+      let rootDirectory = form.controls['rootDirectory'].value;
+      let allowedDomains = form.controls['allowedDomains'].value;
+      let actions = form.controls['actions'].value;
+      if (rootDirectory != null){
+        if (!!rootDirectory[0]) {
+          let dirArray= [];
+          dirArray[0] = rootDirectory;
+          user.attributes.rootDirectory = dirArray;
+        }
+      }
+      if (allowedDomains){
+        let domainsArray = [];
+        domainsArray = allowedDomains.trim().split(/[\r\n]+/);
+        user.attributes.allowedDomains = domainsArray;
+      }
+      if (actions){
+        user.attributes.actions = actions;
+      }
       this.service.updateUser(this.selectedUser.selected[0]).subscribe();
-      this.loadClients();
+      this.loadUsers();
     } else {
       alert('User not selected.');
     }
@@ -75,31 +125,46 @@ export class HomeComponent implements OnInit {
 
   userSelected(): void {
     let selected = this.selectedUser.selected[0];
-    console.log(selected)
     let form = this.clientFormGroup;
     if (selected == null) {
       form.reset();
+      form.controls['username'].enable();
       return;
     }
     form.reset();
     form.controls['id'].setValue(selected.id);
     form.controls['username'].setValue(selected.username);
+    form.controls['username'].disable();
     form.controls['firstName'].setValue(selected.firstName);
     form.controls['lastName'].setValue(selected.lastName);
     form.controls['email'].setValue(selected.email);
-    form.controls['rootDirectory'].setValue(selected.attributes.rootDirectory[0]);
-    if (selected.attributes.allowedDomains == null) {
-      return;
+    if (selected.attributes.rootDirectory != undefined) {
+      form.controls['rootDirectory'].setValue(selected.attributes.rootDirectory[0]);
     }
-    let domains = selected.attributes.allowedDomains;
-    let domainsString = "";
-    domains.forEach(domain => {
-      domainsString += domain + '\n';
-    });
-    form.controls['allowedDomains'].setValue(domainsString);
+    if (selected.attributes.allowedDomains != undefined) {
+      let domains = selected.attributes.allowedDomains;
+      let domainsString = "";
+      domains.forEach(domain => {
+        domainsString += domain + '\n';
+      });
+      form.controls['allowedDomains'].setValue(domainsString);
+    }
+    if (selected.attributes.actions != undefined) {
+      let actions = selected.attributes.actions;
+      this.selectedActions.select(...actions);
+      form.controls['actions'].setValue(actions);
+    }
   }
 
-  add(role: string) {
+  isUserDataEmpty(): boolean {
+    let form = this.clientFormGroup;
+    return !(form.controls['username'].value == null || form.controls['username'].value === '' ||
+      form.controls['firstName'].value == null || form.controls['firstName'].value === '' ||
+      form.controls['lastName'].value == null || form.controls['lastName'].value === '' ||
+      form.controls['email'].value == null || form.controls['email'].value === '');
+  }
+
+  add() {
     let form = this.clientFormGroup;
     let username = form.controls['username'].value;
     let firstName = form.controls['firstName'].value;
@@ -107,23 +172,74 @@ export class HomeComponent implements OnInit {
     let email = form.controls['email'].value;
     let rootDirectory = form.controls['rootDirectory'].value;
     let allowedDomains = form.controls['allowedDomains'].value;
-    // if (this.selectedUser.selected[0] != null) {
-    //   alert('Can not add user while existing user is selected.');
-    //   return;
-    // }
-    if (username == null || username === '' || firstName == null || firstName === ''
-      || lastName == null || lastName === '' || email == null || email === '' || rootDirectory == null
-      || rootDirectory === '') {
+    let actions = form.controls['actions'].value;
+    if (this.selectedUser.selected[0] != null) {
+      alert('Can not add user while existing user is selected.');
+      return;
+    }
+    if (!this.isUserDataEmpty()) {
       alert('User data can not be empty.');
       return;
     }
+    if (this.selectedRole.selected[0] == null) {
+      alert('Select user role.');
+      return;
+    }
+    let role = this.selectedRole.selected;
     let domainsArray = [];
     let rootDirArray = [];
+    let actionsArray = actions;
     rootDirArray[0] = rootDirectory;
-    if (allowedDomains != null || allowedDomains != ''){
+    if (allowedDomains != null && allowedDomains.length === 0) {
       domainsArray = allowedDomains.trim().split(/[\r\n]+/);
+    } else {
+      domainsArray[0] = '\*'
     }
-    let attributes = new Attribute(rootDirArray, domainsArray);
+    let attributes = new Attribute(rootDirArray, domainsArray, actionsArray);
     this.service.addUser(new AddUser(username, firstName, lastName, email, role, attributes)).subscribe();
+  }
+
+  roleChanged(role: string) {
+    switch (role) {
+      case 'application-client':
+        this.selectedUserList = this.clients;
+        this.dataSource = this.clients;
+        this.clientFormGroup.get('actions')?.enable()
+        this.clientFormGroup.get('allowedDomains')?.enable()
+        this.clientFormGroup.get('rootDirectory')?.enable()
+        break;
+      case 'application-document-admin':
+        this.selectedUserList = this.documentAdmins;
+        this.dataSource = this.documentAdmins;
+        this.clientFormGroup.get('actions')?.disable()
+        this.clientFormGroup.get('allowedDomains')?.disable()
+        this.clientFormGroup.get('rootDirectory')?.enable()
+        break;
+      case 'application-system-admin':
+        this.selectedUserList = this.systemAdmins;
+        this.dataSource = this.systemAdmins;
+        this.clientFormGroup.get('actions')?.disable()
+        this.clientFormGroup.get('allowedDomains')?.disable()
+        this.clientFormGroup.get('rootDirectory')?.disable()
+        break;
+    }
+    this.clientFormGroup.reset();
+    this.selectedUser.clear();
+  }
+
+  applyFilter(target: any) {
+    let filter = (target as HTMLInputElement).value;
+    this.dataSource = this.selectedUserList;
+    this.dataSource = this.selectedUserList.filter((user: User) => user.username.toLowerCase().includes(filter.toLowerCase()) ||
+      user.firstName.toLowerCase().includes(filter.toLowerCase()) || user.lastName.toLowerCase().includes(filter.toLowerCase()) ||
+      user.email.toLowerCase().includes(filter.toLowerCase()));
+  }
+
+  resetPassword() {
+    if (this.selectedUser.selected[0] == null) {
+      alert('User not selected.')
+      return;
+    }
+    this.service.resetPassword(this.selectedUser.selected[0]).subscribe();
   }
 }

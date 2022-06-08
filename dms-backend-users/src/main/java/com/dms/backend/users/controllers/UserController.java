@@ -1,5 +1,6 @@
 package com.dms.backend.users.controllers;
 
+import com.dms.backend.users.model.entities.AddUser;
 import com.dms.backend.users.model.entities.User;
 import com.dms.backend.users.services.UserService;
 import org.apache.logging.log4j.util.Strings;
@@ -30,14 +31,9 @@ public class UserController {
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
-    @GetMapping("/users/update")
-    public void letItBe(){
-        System.out.println("asa");
-    }
-
-    @PostMapping("/users/update")
-    public void updateUser(@RequestBody String body){
-        System.out.println(body);
+    @PutMapping("/users/update")
+    public void updateUser(@RequestBody User user){
+        userService.updateUser(user);
     }
 
     @DeleteMapping("/users/delete/{id}")
@@ -47,7 +43,12 @@ public class UserController {
     }
 
     @PostMapping("/users/add")
-    public void addUser(@RequestBody User user){
+    public void addUser(@RequestBody AddUser user){
         userService.addUser(user);
+    }
+
+    @PutMapping("/users/reset")
+    public void resetPassword(@RequestBody User user){
+        userService.resetPassword(user);
     }
 }

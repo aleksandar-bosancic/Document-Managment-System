@@ -6,4 +6,5 @@ import lombok.Data;
 public class Attribute {
     String[] rootDirectory;
     String[] allowedDomains;
+    String[] actions;
 }

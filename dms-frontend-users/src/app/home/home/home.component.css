@@ -1,5 +1,9 @@
+.main-container {
+  display: flex;
+  flex-direction: column;
+}
 .tab-container {
-  margin: 30px 30px;
+  margin: 0 30px;
   width: auto;
   display: flex;
   align-items: flex-start;
@@ -45,11 +49,17 @@
   max-width: 350px;
 }
 
-.details-label {
+.details-container{
   justify-self: center;
   align-self: center;
+}
+
+.details-label {
   font-size: 20px;
   margin-bottom: 30px;
+  margin-right: 30px;
+  align-self: center;
+  justify-self: center;
 }
 
 .filter-field {
@@ -59,6 +69,10 @@
 
 .update-button {
   margin-top: 30px;
-  max-width: 100px;
+  max-width: 130px;
+  align-self: center;
+}
+
+.role-selector {
   align-self: center;
 }

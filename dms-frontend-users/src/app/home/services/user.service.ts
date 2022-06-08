@@ -11,12 +11,13 @@ export class UserService {
   constructor(private http: HttpClient) {
   }
 
-  public getUsers() {
-    return this.http.get<User>('https://localhost:9001/admin/users/client');
+  public getUsers(role: string) {
+    return this.http.get<User>('https://localhost:9001/admin/users/' + role);
   }
 
   updateUser(user: User) {
-    return this.http.get('https://localhost:9001/admin/users/update');
+    const csrfToken = document.cookie.replace(/(?:^|.*;\s*)XSRF-TOKEN\s*=\s*([^;]*).*$|^.*$/, '$1');
+    return this.http.put('https://localhost:9001/admin/users/update', user, {headers: {'X-XSRF-TOKEN': csrfToken}});
   }
 
   deleteUser(user: User) {
@@ -28,5 +29,10 @@ export class UserService {
     const csrfToken = document.cookie.replace(/(?:^|.*;\s*)XSRF-TOKEN\s*=\s*([^;]*).*$|^.*$/, '$1');
     // console.log(csrfToken)
     return this.http.post('https://localhost:9001/admin/users/add', addUser, {headers: {'X-XSRF-TOKEN': csrfToken}});
+  }
+
+  resetPassword(user: User) {
+    const csrfToken = document.cookie.replace(/(?:^|.*;\s*)XSRF-TOKEN\s*=\s*([^;]*).*$|^.*$/, '$1');
+    return this.http.put('https://localhost:9001/admin/users/reset', user,{headers: {'X-XSRF-TOKEN': csrfToken}});
   }
 }
