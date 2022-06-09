@@ -1,24 +1,26 @@
-package com.dms.backend.users.model.entities;
+package com.dms.backend.users.model;
 
 import lombok.Data;
 
+import java.util.Arrays;
+
 @Data
-public class User {
-    String id;
+public class AddUser {
     String username;
     String firstName;
     String lastName;
     String email;
+    String[] realmRoles;
     Attribute attributes;
 
     @Override
     public String toString() {
-        return "User{" +
-                "id='" + id + '\'' +
-                ", username='" + username + '\'' +
+        return "AddUser{" +
+                "username='" + username + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
+                ", realmRoles=" + Arrays.toString(realmRoles) +
                 ", attributes=" + attributes +
                 '}';
     }

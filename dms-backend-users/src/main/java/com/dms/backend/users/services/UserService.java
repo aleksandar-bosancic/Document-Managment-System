@@ -1,6 +1,6 @@
 package com.dms.backend.users.services;
 
-import com.dms.backend.users.model.entities.*;
+import com.dms.backend.users.model.*;
 import org.keycloak.adapters.springsecurity.client.KeycloakRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

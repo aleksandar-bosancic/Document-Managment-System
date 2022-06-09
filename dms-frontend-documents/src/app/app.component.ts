@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import {HttpClient} from "@angular/common/http";
+import {AuthService} from "./services/auth.service";
 
 @Component({
   selector: 'app-root',
@@ -7,13 +7,12 @@ import {HttpClient} from "@angular/common/http";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'dms-frontend-documents';
-  constructor(private http: HttpClient) {
+  title = 'Document Management System';
+
+  constructor(private authService: AuthService) {
   }
-  fun() {
-    console.log('asaa')
-    this.http.get('http://localhost:9001/success').subscribe((value: any) => {
-      console.log(value);
-    })
+
+  logout() {
+    this.authService.logout();
   }
 }

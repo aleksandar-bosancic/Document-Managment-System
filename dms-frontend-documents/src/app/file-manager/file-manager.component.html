@@ -1,0 +1,66 @@
+<div class="main-container">
+  <mat-toolbar>
+    <button mat-icon-button *ngIf="canNavigateUp" (click)="navigateUp()" matTooltip="Back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span style="margin-left: 8px">{{ currentPath || 'Files'}}</span>
+    <span class="spacer"></span>
+    <button mat-icon-button (click)="pasteFile()" matTooltip="Paste">
+      <mat-icon color="primary">content_paste</mat-icon>
+    </button>
+    <button mat-icon-button (click)="addFolder()" matTooltip="New folder">
+      <mat-icon color="primary">create_new_folder</mat-icon>
+    </button>
+    <button mat-icon-button (click)="upload()" matTooltip="Upload file">
+      <mat-icon color="primary">cloud_upload</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <mat-grid-list class="mat-grid-list" [cols]="columnsBreakpoint" rowHeight="100px" (window:resize)="resize($event)">
+    <mat-grid-tile *ngFor="let file of files" class="mat-grid-tile">
+      <span [matMenuTriggerFor]="fileMenu" #menuTrigger="matMenuTrigger" [matMenuTriggerData]="{file: file}"></span>
+      <div class="icon-label-container" (contextmenu)="openFileMenu($event, menuTrigger, file)"
+           (click)="navigate(file)">
+        <mat-icon *ngIf="file.isFolder" class="file pointer" color="primary">folder</mat-icon>
+        <mat-icon *ngIf="!file.isFolder" class="file pointer" color="primary">description</mat-icon>
+        <span>{{file.name}}</span>
+      </div>
+    </mat-grid-tile>
+  </mat-grid-list>
+</div>
+
+<mat-menu #fileMenu="matMenu" [overlapTrigger]="false">
+  <ng-template matMenuContent let-file="file">
+    <button mat-menu-item [matMenuTriggerFor]="moveFileMenu" [matMenuTriggerData]="{self: file}">
+      <mat-icon>drive_file_move</mat-icon>
+      Move
+    </button>
+    <button mat-menu-item (click)="removeFile(file)">
+      <mat-icon>delete</mat-icon>
+      Remove
+    </button>
+    <button mat-menu-item (click)="renameFile(file)">
+      <mat-icon>edit</mat-icon>
+      Rename
+    </button>
+    <button mat-menu-item [disabled]="file.isFolder">
+      <mat-icon>file_download</mat-icon>
+      Download
+    </button>
+    <button mat-menu-item (click)="cutFile(file)">
+      <mat-icon>content_cut</mat-icon>
+      Cut
+    </button>
+  </ng-template>
+</mat-menu>
+
+<mat-menu #moveFileMenu="matMenu">
+  <ng-template matMenuContent let-self="self">
+    <ng-container *ngFor="let file of files">
+      <button *ngIf="file.isFolder && file.id !== self.id" mat-menu-item
+              (click)="moveFile(self, file)">
+        <mat-icon>folder</mat-icon>
+        {{file.name}}</button>
+    </ng-container>
+  </ng-template>
+</mat-menu>

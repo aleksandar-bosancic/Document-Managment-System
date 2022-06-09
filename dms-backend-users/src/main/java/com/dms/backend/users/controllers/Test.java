@@ -1,12 +1,9 @@
 package com.dms.backend.users.controllers;
 
-import com.dms.backend.users.model.entities.User;
+import com.dms.backend.users.model.User;
 import org.keycloak.adapters.springsecurity.client.KeycloakRestTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Arrays;
-import java.util.List;
 
 
 @RestController

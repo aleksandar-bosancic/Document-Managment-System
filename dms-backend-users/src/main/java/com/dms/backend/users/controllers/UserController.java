@@ -1,10 +1,9 @@
 package com.dms.backend.users.controllers;
 
-import com.dms.backend.users.model.entities.AddUser;
-import com.dms.backend.users.model.entities.User;
+import com.dms.backend.users.model.AddUser;
+import com.dms.backend.users.model.User;
 import com.dms.backend.users.services.UserService;
 import org.apache.logging.log4j.util.Strings;
-import org.keycloak.adapters.springsecurity.client.KeycloakRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

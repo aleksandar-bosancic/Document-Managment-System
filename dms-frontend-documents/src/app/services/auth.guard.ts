@@ -19,8 +19,16 @@ export class AuthGuard extends KeycloakAuthGuard {
         redirectUri: window.location.origin + state.url,
       });
     }
-    const requiredRole = route.data['roles'];
+    const requiredRoles = route.data['roles'];
+    if (!(requiredRoles instanceof Array) || requiredRoles.length === 0){
+      return true;
+    }
 
-    return this.authenticated;
+    if (requiredRoles.every((role) => this.roles.includes(role))){
+      return true;
+    } else {
+      // await this.keycloak.logout('access-denied');
+      return false;
+    }
   }
 }

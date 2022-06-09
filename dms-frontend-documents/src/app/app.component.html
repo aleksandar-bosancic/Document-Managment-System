@@ -1,3 +1,13 @@
-<h1>Documents hasa</h1>
-<a routerLink="/home">home</a>
-<router-outlet></router-outlet>
+<mat-toolbar class="toolbar" color="primary">
+  <div>
+  </div>
+  <div>
+    <h2>DMS ADMINISTRATION</h2>
+  </div>
+  <div>
+    <button mat-icon-button (click)="logout()" matTooltip="Logout">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>
+<app-file-manager style="height: 100%"></app-file-manager>

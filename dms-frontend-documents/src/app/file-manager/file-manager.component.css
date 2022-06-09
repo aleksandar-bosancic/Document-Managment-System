@@ -1,0 +1,39 @@
+.main-container{
+  display: flex;
+  flex-direction: column;
+  height: 88vh;
+}
+.mat-grid-list{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 0 30px;
+}
+.mat-grid-tile{
+  padding: 8px;
+  overflow: hidden;
+  width: 70px !important;
+  height: 50px;
+}
+
+.file {
+  width: 50px;
+  height: 50px;
+  font-size: 50px;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.icon-label-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
