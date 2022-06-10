@@ -21,8 +21,8 @@
       <span [matMenuTriggerFor]="fileMenu" #menuTrigger="matMenuTrigger" [matMenuTriggerData]="{file: file}"></span>
       <div class="icon-label-container" (contextmenu)="openFileMenu($event, menuTrigger, file)"
            (click)="navigate(file)">
-        <mat-icon *ngIf="file.isFolder" class="file pointer" color="primary">folder</mat-icon>
-        <mat-icon *ngIf="!file.isFolder" class="file pointer" color="primary">description</mat-icon>
+        <mat-icon *ngIf="file.folder" class="file pointer" color="primary">folder</mat-icon>
+        <mat-icon *ngIf="!file.folder" class="file pointer" color="primary">description</mat-icon>
         <span>{{file.name}}</span>
       </div>
     </mat-grid-tile>
@@ -57,7 +57,7 @@
 <mat-menu #moveFileMenu="matMenu">
   <ng-template matMenuContent let-self="self">
     <ng-container *ngFor="let file of files">
-      <button *ngIf="file.isFolder && file.id !== self.id" mat-menu-item
+      <button *ngIf="file.folder && file !== self" mat-menu-item
               (click)="moveFile(self, file)">
         <mat-icon>folder</mat-icon>
         {{file.name}}</button>

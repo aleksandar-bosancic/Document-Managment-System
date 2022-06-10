@@ -1,0 +1,21 @@
+.mat-dialog-content{
+  width: 45vw;
+  height: 30vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.file-upload {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-btn {
+  margin-bottom: 15px;
+}

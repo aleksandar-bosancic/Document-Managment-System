@@ -1,0 +1,10 @@
+<mat-dialog-content>
+  <input type="file" (change)="onFileSelected($event)" accept=".txt, .docx" #fileUpload hidden>
+  <div class="file-upload">
+    <button mat-mini-fab color="primary" class="upload-btn" (click)="fileUpload.click()">
+      <mat-icon>attach_file</mat-icon>
+    </button>
+    <span>{{fileName || "No file uploaded yet."}}</span>
+  </div>
+  <button mat-raised-button color="primary" *ngIf="fileSelected()" (click)="upload()">Upload</button>
+</mat-dialog-content>

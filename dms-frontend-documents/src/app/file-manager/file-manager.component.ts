@@ -2,10 +2,16 @@ import {Component, Input, OnInit} from '@angular/core';
 import {MatMenuTrigger} from "@angular/material/menu";
 import {HttpClient} from "@angular/common/http";
 import {FileService} from "../services/file.service";
-import {FileElement} from "../model/file-element";
+import {FileElement} from "../model/file-element.model";
 import {v4 as uuid} from "uuid";
 import {MatDialog} from "@angular/material/dialog";
 import {RenameDialogComponent} from "../dialogs/rename-dialog/rename-dialog.component";
+import {AuthService} from "../services/auth.service";
+import {User} from "../model/user.model";
+import {RenameRequest} from "../model/rename-request.model";
+import {PathRequest} from "../model/path-request.model";
+import {MoveRequest} from "../model/move-request.model";
+import {FileUploadDialog} from "../dialogs/file-upload/file-upload.dialog";
 
 @Component({
   selector: 'app-file-manager',
@@ -25,29 +31,25 @@ export class FileManagerComponent implements OnInit {
   public rootFolder: any;
 
   public currentPath: string = '';
-  public rootFolderName: string = 'root';
 
-  constructor(private http: HttpClient, private fileService: FileService, private dialog: MatDialog) {
+  constructor(private http: HttpClient, private fileService: FileService, private dialog: MatDialog, private authService: AuthService) {
+    this.authService.getUser().then((user: User) => {
+      this.getFiles(user.attributes.rootDirectory[0])
+    })
+  }
+
+  getFiles(userDir: string) {
+    // @ts-ignore
+    this.fileService.getFiles(userDir).subscribe((result: FileElement) => {
+      this.rootFolder = result;
+      this.currentRoot = this.rootFolder;
+      this.files = result.children!;
+      this.currentPath = this.rootFolder.name + '/';
+    })
   }
 
   ngOnInit(): void {
-    const root = this.fileService.add(new FileElement(uuid(), true, 'root', ''));
-    const folderA = this.fileService.add(new FileElement(uuid(), true, 'Folder A', root.id));
-    const folderB = this.fileService.add(new FileElement(uuid(), true, 'Folder B', root.id));
-    const folderC = this.fileService.add(new FileElement(uuid(), true, 'Folder C', folderA.id));
-    const fileA = this.fileService.add(new FileElement(uuid(), false, 'FileElement A', root.id));
-    const folderE = this.fileService.add(new FileElement(uuid(), true, 'Folder E', root.id));
-    const folderD = this.fileService.add(new FileElement(uuid(), true, 'Folder D', folderC.id));
-    folderA.children?.push(folderC);
-    folderC.children?.push(folderD);
-    root.children?.push(folderB, folderE, fileA, folderA);
-    this.currentRoot = root;
-    this.rootFolder = root;
     this.updateFileElementQuery();
-  }
-
-  testIt() {
-    // this.http.get('https://localhost:9000/try', {responseType: "text"}).subscribe(value => console.log(value));
   }
 
   resize(event: any) {
@@ -75,20 +77,33 @@ export class FileManagerComponent implements OnInit {
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
         let temp = this.files.find(value => value.name === res);
-        if (temp){
+        if (temp) {
           alert('Name already exists');
         } else {
-          let tmp = this.fileService.add(new FileElement(uuid(), true, res, this.currentRoot.id));
-          this.currentRoot.children.push(tmp);
-          this.updateFileElementQuery();
+          let tmp = new FileElement(true, res);
+          console.log(this.currentPath)
+          tmp.path = ((this.currentPath) ? this.currentPath : this.rootFolder.name) + res;
+          console.log(tmp.path)
+          this.fileService.add(tmp).subscribe(value => {
+            if (!this.currentRoot.children) {
+              this.currentRoot.children = new Array<FileElement>();
+            }
+            this.currentRoot.children.push(tmp);
+            this.updateFileElementQuery();
+          });
         }
       }
     });
   }
 
   removeFile(file: FileElement): void {
-    this.fileService.delete(file, this.currentRoot);
-    this.updateFileElementQuery();
+    this.fileService.delete(new PathRequest(file.path!)).subscribe(value => {
+      let index = this.currentRoot?.children?.indexOf(file);
+      if (index != undefined) {
+        this.currentRoot?.children?.splice(index, 1);
+      }
+      this.updateFileElementQuery();
+    });
   }
 
   cutFile(file: FileElement): void {
@@ -97,32 +112,50 @@ export class FileManagerComponent implements OnInit {
   }
 
   pasteFile() {
-    if (this.fileInClipboard) {
-      this.fileService.move(this.fileInClipboard, this.currentRoot);
-      this.fileInClipboard = null;
-      this.updateFileElementQuery();
+    if (this.fileInClipboard && this.parentOfCutFile) {
+      this.fileService.move(new MoveRequest(this.fileInClipboard.path, this.currentRoot.path)).subscribe(value => {
+        this.move(this.fileInClipboard, this.currentRoot, this.parentOfCutFile);
+        this.fileInClipboard = null;
+        this.parentOfCutFile = null;
+        this.updateFileElementQuery();
+      })
     }
+  }
+
+  moveFile(file: FileElement, destinationFolder: FileElement): void {
+    this.fileService.move(new MoveRequest(file.path!, destinationFolder.path!)).subscribe(value => {
+      this.move(file, destinationFolder, this.currentRoot);
+      this.updateFileElementQuery();
+    })
+  }
+
+  move(file: FileElement, destination: FileElement, parent: FileElement) {
+    let index = parent?.children?.indexOf(file);
+    if (index != undefined) {
+      parent?.children?.splice(index, 1);
+    }
+    if (!destination.children) {
+      destination.children = new Array<FileElement>();
+    }
+    destination.children?.push(file);
   }
 
   renameFile(file: FileElement): void {
     let dialogRef = this.dialog.open(RenameDialogComponent);
-    dialogRef.componentInstance.dialogTitle = 'Rename ' + (file.isFolder ? 'folder' : 'file');
+    dialogRef.componentInstance.dialogTitle = 'Rename ' + (file.folder ? 'folder' : 'file');
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
         let temp = this.files.find(value => value.name === res);
-        if (temp){
+        if (temp) {
           alert('Name already exists');
         } else {
-          this.fileService.update(file.id, {name: res});
+          this.fileService.update(new RenameRequest(file.path!, res)).subscribe(value => {
+            file.name = res;
+          });
           this.updateFileElementQuery();
         }
       }
     })
-  }
-
-  moveFile(file: FileElement, destinationFolder: FileElement): void {
-    this.fileService.move(file, destinationFolder);
-    this.updateFileElementQuery();
   }
 
   updateFileElementQuery(): void {
@@ -130,23 +163,22 @@ export class FileManagerComponent implements OnInit {
   }
 
   navigate(file: FileElement): void {
-    if (file.isFolder) {
+    if (file.folder) {
       this.pathHistory.push(this.currentRoot);
       this.currentRoot = file;
       this.files = this.fileService.queryInFolder(file);
       this.currentPath = this.pushToPath(this.currentPath, file.name);
-      console.log(this.pathHistory)
     }
   }
 
   pushToPath(path: string, folderName: string): string {
-    let tempPath = path ? path : '';
+    let tempPath = path ? path : this.rootFolder.name + '/';
     tempPath += `${folderName}/`;
     return tempPath;
   }
 
   popFromPath(path: string): string {
-    let tempPath = path ? path : '';
+    let tempPath = path ? path : this.rootFolder.name + '/';
     let split = tempPath.split('/');
     split.splice(split.length - 2, 1);
     tempPath = split.join('/');
@@ -154,14 +186,13 @@ export class FileManagerComponent implements OnInit {
   }
 
   navigateUp(): void {
-    if (this.pathHistory && this.pathHistory.length != 0){
+    if (this.pathHistory && this.pathHistory.length != 0) {
       this.currentRoot = this.pathHistory.pop();
       this.updateFileElementQuery();
     } else {
       this.currentRoot = this.rootFolder;
       this.updateFileElementQuery();
     }
-    console.log(this.pathHistory)
     this.currentPath = this.popFromPath(this.currentPath);
   }
 
@@ -171,7 +202,15 @@ export class FileManagerComponent implements OnInit {
   }
 
   upload() {
-    console.log('upload')
+    let dialogRef = this.dialog.open(FileUploadDialog);
+    dialogRef.componentInstance.path = this.currentPath;
+    dialogRef.afterClosed().subscribe(value => {
+      if (!this.currentRoot.children) {
+        this.currentRoot.children = new Array<FileElement>();
+      }
+      this.currentRoot.children.push(value);
+      this.updateFileElementQuery();
+    });
   }
 
   canNavigate() {

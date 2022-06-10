@@ -10,13 +10,15 @@ import {AppMaterialModule} from "./app-material/app-material.module";
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FileManagerComponent } from './file-manager/file-manager.component';
 import { RenameDialogComponent } from './dialogs/rename-dialog/rename-dialog.component';
+import { FileUploadDialog } from './dialogs/file-upload/file-upload.dialog';
 
 
 @NgModule({
   declarations: [
     AppComponent,
     FileManagerComponent,
-    RenameDialogComponent
+    RenameDialogComponent,
+    FileUploadDialog
   ],
   imports: [
     BrowserModule,

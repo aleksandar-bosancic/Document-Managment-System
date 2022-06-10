@@ -1,69 +1,52 @@
 import {Injectable} from '@angular/core';
-import {FileElement} from "../model/file-element";
+import {FileElement} from "../model/file-element.model";
 import {v4 as uuid} from "uuid";
+import {HttpClient, HttpParams} from "@angular/common/http";
+import {RenameRequest} from "../model/rename-request.model";
+import {PathRequest} from "../model/path-request.model";
+import {MoveRequest} from "../model/move-request.model";
 
 @Injectable({
   providedIn: 'root'
 })
 export class FileService {
-  private map = new Map<string, FileElement>();
-  public list: FileElement[] = [];
 
-  constructor() {
-    const root = new FileElement(uuid(), true, 'root', '');
-    const folderA = new FileElement(uuid(), true, 'Folder A', root.id);
-    const folderB = new FileElement(uuid(), true, 'Folder B', root.id);
-    const folderC = new FileElement(uuid(), true, 'Folder C', folderA.id);
-    const fileA = new FileElement(uuid(), false, 'FileElement A', root.id);
-    const folderE = new FileElement(uuid(), true, 'Folder E', root.id);
-    const folderD = new FileElement(uuid(), true, 'Folder D', folderC.id);
-    folderA.children?.push(folderC);
-    folderC.children?.push(folderD);
-    root.children?.push(folderB, folderE, fileA, folderA);
-    this.list.push(root, folderA, folderC, folderA, folderB, folderE, folderD, fileA);
+  constructor(private http: HttpClient) {
   }
 
-  add(folder: FileElement): FileElement {
-    this.map.set(folder.id, folder);
-    return folder;
+  getFiles(userDir: string) {
+    return this.http.get('https://localhost:9000/client/directory/root/' + userDir);
   }
 
-  delete(file: FileElement, parent: FileElement): void {
-    let p = this.get(file.parent);
-    let index = p?.children?.indexOf(file);
-    if (index != undefined) {
-      p?.children?.splice(index, 1);
-    }
-    if (file.isFolder){
-      file.children?.forEach(value => this.delete(value, p!));
-    }
-    this.map.delete(file.id);
+  add(folder: FileElement) {
+    return this.http.post('https://localhost:9000/client/directory/add', folder);
   }
 
-  get(id: string): FileElement | undefined {
-    return this.map.get(id);
+  delete(request: PathRequest) {
+    return this.http.post('https://localhost:9000/client/directory/remove', request);
   }
 
-  queryInFolder(folderId: FileElement): FileElement[] {
-    return folderId.children ?? [];
+  queryInFolder(folder: FileElement): FileElement[] {
+    return folder?.children ?? [];
   }
 
-  update(id: string, update: Partial<FileElement>): void {
-    let file = this.map.get(id);
-    file = Object.assign(file, update);
-    this.map.set(file.id, file);
+  update(request: RenameRequest) {
+    return this.http.post('https://localhost:9000/client/directory/update', request);
   }
 
-  move(file: FileElement, destination: FileElement): void {
-    let parent = this.get(file.parent);
-    let index = parent?.children?.indexOf(file);
-    if (index != undefined) {
-      console.log(index)
-      parent?.children?.splice(index, 1);
-    }
-    console.log(parent?.children)
-    destination.children?.push(file);
-    console.log(destination.children)
-    file.parent = destination.id;
+  move(request: MoveRequest) {
+    return this.http.post('https://localhost:9000/client/directory/move', request);
+  }
+
+  uploadFile(file: File, path: string) {
+    let regex = /\//g;
+    let params: HttpParams = new HttpParams().set('path', path.replace(regex, '#'));
+    let formData: FormData = new FormData();
+    formData.append('file', file);
+    return this.http.post('https://localhost:9000/client/file/upload', formData, {
+      reportProgress: true,
+      responseType: "json",
+      params: params
+    });
   }
 }
