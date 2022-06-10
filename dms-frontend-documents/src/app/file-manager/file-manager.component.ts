@@ -17,20 +17,27 @@ export class FileManagerComponent implements OnInit {
   public files: FileElement[] = [];
   public fileInClipboard: any = null;
   public currentRoot: any = null;
+  public rootFolder: any;
   public currentPath: string = '';
   public canNavigateUp: boolean = false;
-  public rootFolder: string = 'root';
+  public rootFolderName: string = 'root';
 
   constructor(private http: HttpClient, private fileService: FileService, private dialog: MatDialog) {
   }
 
   ngOnInit(): void {
-    const folderA = this.fileService.add(new FileElement(uuid(), true, 'Folder A', 'root'));
-    this.fileService.add(new FileElement(uuid(), true, 'Folder B', 'root'));
+    const root = this.fileService.add(new FileElement(uuid(), true, 'root', ''));
+    const folderA = this.fileService.add(new FileElement(uuid(), true, 'Folder A', root.id));
+    const folderB = this.fileService.add(new FileElement(uuid(), true, 'Folder B', root.id));
     const folderC = this.fileService.add(new FileElement(uuid(), true, 'Folder C', folderA.id));
-    this.fileService.add(new FileElement(uuid(), false, 'FileElement A', 'root'));
-    this.fileService.add(new FileElement(uuid(), true, 'Folder E', 'root'));
-    this.fileService.add(new FileElement(uuid(), true, 'Folder D', folderC.id));
+    const fileA = this.fileService.add(new FileElement(uuid(), false, 'FileElement A', root.id));
+    const folderE = this.fileService.add(new FileElement(uuid(), true, 'Folder E', root.id));
+    const folderD = this.fileService.add(new FileElement(uuid(), true, 'Folder D', folderC.id));
+    folderA.children?.push(folderC);
+    folderC.children?.push(folderD);
+    root.children?.push(folderB, folderE, fileA, folderA);
+    this.currentRoot = root;
+    this.rootFolder = root;
     this.updateFileElementQuery();
   }
 
@@ -62,14 +69,20 @@ export class FileManagerComponent implements OnInit {
     dialogRef.componentInstance.dialogTitle = 'Add new folder';
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.fileService.add(new FileElement(uuid(), true, res, this.currentRoot ? this.currentRoot.id : this.rootFolder));
-        this.updateFileElementQuery();
+        let temp = this.files.find(value => value.name === res);
+        if (temp){
+          alert('Name already exists');
+        } else {
+          let tmp = this.fileService.add(new FileElement(uuid(), true, res, this.currentRoot.id));
+          this.currentRoot.children.push(tmp);
+          this.updateFileElementQuery();
+        }
       }
     });
   }
 
   removeFile(file: FileElement): void {
-    this.fileService.delete(file.id);
+    this.fileService.delete(file);
     this.updateFileElementQuery();
   }
 
@@ -79,7 +92,7 @@ export class FileManagerComponent implements OnInit {
 
   pasteFile() {
     if (this.fileInClipboard) {
-      this.fileService.update(this.fileInClipboard.id, {parent: this.currentRoot ? this.currentRoot.id : this.rootFolder});
+      this.fileService.move(this.fileInClipboard, this.currentRoot);
       this.fileInClipboard = null;
       this.updateFileElementQuery();
     }
@@ -90,25 +103,30 @@ export class FileManagerComponent implements OnInit {
     dialogRef.componentInstance.dialogTitle = 'Rename ' + (file.isFolder ? 'folder' : 'file');
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.fileService.update(file.id, {name: res});
-        this.updateFileElementQuery();
+        let temp = this.files.find(value => value.name === res);
+        if (temp){
+          alert('Name already exists');
+        } else {
+          this.fileService.update(file.id, {name: res});
+          this.updateFileElementQuery();
+        }
       }
     })
   }
 
   moveFile(file: FileElement, destinationFolder: FileElement): void {
-    this.fileService.update(file.id, {parent: destinationFolder.id});
+    this.fileService.move(file, destinationFolder);
     this.updateFileElementQuery();
   }
 
   updateFileElementQuery(): void {
-    this.files = this.fileService.queryInFolder(this.currentRoot ? this.currentRoot.id : this.rootFolder);
+    this.files = this.fileService.queryInFolder(this.currentRoot);
   }
 
   navigate(file: FileElement): void {
     if (file.isFolder) {
       this.currentRoot = file;
-      this.files = this.fileService.queryInFolder(file.id);
+      this.files = this.fileService.queryInFolder(file);
       this.currentPath = this.pushToPath(this.currentPath, file.name);
       this.canNavigateUp = true;
     }
@@ -129,12 +147,17 @@ export class FileManagerComponent implements OnInit {
   }
 
   navigateUp(): void {
-    if (this.currentRoot && this.currentRoot.parent === this.rootFolder) {
-      this.currentRoot = undefined;
+    if (this.currentRoot === this.rootFolder) {
+      this.canNavigateUp = false;
+      this.updateFileElementQuery();
+    } else if (this.currentRoot.parent === this.rootFolder.id){
+      this.currentRoot = this.rootFolder;
       this.canNavigateUp = false;
       this.updateFileElementQuery();
     } else {
+      this.canNavigateUp = true;
       this.currentRoot = this.fileService.get(this.currentRoot.parent);
+      // console.log(this.currentRoot)
       this.updateFileElementQuery();
     }
     this.currentPath = this.popFromPath(this.currentPath);

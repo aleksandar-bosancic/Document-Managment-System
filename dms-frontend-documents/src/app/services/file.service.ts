@@ -1,56 +1,56 @@
-import { Injectable } from '@angular/core';
-import { v4 as uuid } from 'uuid';
+import {Injectable} from '@angular/core';
 import {FileElement} from "../model/file-element";
-
-export interface IFileService {
-  add(file: FileElement): FileElement;
-  delete(id: string): void;
-  update(id: string, update: Partial<FileElement>): void;
-  queryInFolder(folderId: string): FileElement[];
-  get(id: string): FileElement | undefined;
-}
 
 @Injectable({
   providedIn: 'root'
 })
-export class FileService implements IFileService{
+export class FileService {
   private map = new Map<string, FileElement>();
 
-  constructor() { }
-
-  add(file: FileElement): FileElement {
-    file.id = uuid();
-    this.map.set(file.id, this.clone(file));
-    return file;
+  constructor() {
   }
 
-  delete(id: string): void {
-    this.map.delete(id);
+  add(folder: FileElement): FileElement {
+    this.map.set(folder.id, folder);
+    return folder;
   }
 
-  get(id: string): FileElement | undefined{
+  delete(file: FileElement): void {
+    let parent = this.get(file.parent);
+    let index = parent?.children?.indexOf(file);
+    if (index != undefined) {
+      parent?.children?.splice(index, 1);
+    }
+    if (file.isFolder){
+      file.children?.forEach(value => this.delete(value));
+    }
+    this.map.delete(file.id);
+  }
+
+  get(id: string): FileElement | undefined {
     return this.map.get(id);
   }
 
-  private querySubject: FileElement[] | undefined;
-  queryInFolder(folderId: string): FileElement[] {
-    const result: FileElement[] = [];
-    this.map.forEach(element => {
-      if (element.parent === folderId) {
-        result.push(this.clone(element));
-      }
-    });
-    this.querySubject = result;
-    return this.querySubject;
+  queryInFolder(folderId: FileElement): FileElement[] {
+    return folderId.children ?? [];
   }
 
-  update(id: string, update: Partial<FileElement>) {
+  update(id: string, update: Partial<FileElement>): void {
     let file = this.map.get(id);
     file = Object.assign(file, update);
     this.map.set(file.id, file);
   }
 
-  clone(file: FileElement){
-    return JSON.parse(JSON.stringify(file));
+  move(file: FileElement, destination: FileElement): void {
+    let parent = this.get(file.parent);
+    let index = parent?.children?.indexOf(file);
+    if (index != undefined) {
+      console.log(index)
+      parent?.children?.splice(index, 1);
+    }
+    console.log(parent?.children)
+    destination.children?.push(file);
+    console.log(destination.children)
+    file.parent = destination.id;
   }
 }
