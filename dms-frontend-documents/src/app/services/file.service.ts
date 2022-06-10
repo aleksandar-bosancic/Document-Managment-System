@@ -1,13 +1,26 @@
 import {Injectable} from '@angular/core';
 import {FileElement} from "../model/file-element";
+import {v4 as uuid} from "uuid";
 
 @Injectable({
   providedIn: 'root'
 })
 export class FileService {
   private map = new Map<string, FileElement>();
+  public list: FileElement[] = [];
 
   constructor() {
+    const root = new FileElement(uuid(), true, 'root', '');
+    const folderA = new FileElement(uuid(), true, 'Folder A', root.id);
+    const folderB = new FileElement(uuid(), true, 'Folder B', root.id);
+    const folderC = new FileElement(uuid(), true, 'Folder C', folderA.id);
+    const fileA = new FileElement(uuid(), false, 'FileElement A', root.id);
+    const folderE = new FileElement(uuid(), true, 'Folder E', root.id);
+    const folderD = new FileElement(uuid(), true, 'Folder D', folderC.id);
+    folderA.children?.push(folderC);
+    folderC.children?.push(folderD);
+    root.children?.push(folderB, folderE, fileA, folderA);
+    this.list.push(root, folderA, folderC, folderA, folderB, folderE, folderD, fileA);
   }
 
   add(folder: FileElement): FileElement {
@@ -15,14 +28,14 @@ export class FileService {
     return folder;
   }
 
-  delete(file: FileElement): void {
-    let parent = this.get(file.parent);
-    let index = parent?.children?.indexOf(file);
+  delete(file: FileElement, parent: FileElement): void {
+    let p = this.get(file.parent);
+    let index = p?.children?.indexOf(file);
     if (index != undefined) {
-      parent?.children?.splice(index, 1);
+      p?.children?.splice(index, 1);
     }
     if (file.isFolder){
-      file.children?.forEach(value => this.delete(value));
+      file.children?.forEach(value => this.delete(value, p!));
     }
     this.map.delete(file.id);
   }

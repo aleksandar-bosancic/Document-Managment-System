@@ -14,12 +14,17 @@ import {RenameDialogComponent} from "../dialogs/rename-dialog/rename-dialog.comp
 })
 export class FileManagerComponent implements OnInit {
   public columnsBreakpoint: number = 8;
+
   public files: FileElement[] = [];
+  public pathHistory: FileElement[] = [];
+
   public fileInClipboard: any = null;
-  public currentRoot: any = null;
+  public parentOfCutFile: any = null;
+
+  public currentRoot: any;
   public rootFolder: any;
+
   public currentPath: string = '';
-  public canNavigateUp: boolean = false;
   public rootFolderName: string = 'root';
 
   constructor(private http: HttpClient, private fileService: FileService, private dialog: MatDialog) {
@@ -82,11 +87,12 @@ export class FileManagerComponent implements OnInit {
   }
 
   removeFile(file: FileElement): void {
-    this.fileService.delete(file);
+    this.fileService.delete(file, this.currentRoot);
     this.updateFileElementQuery();
   }
 
   cutFile(file: FileElement): void {
+    this.parentOfCutFile = this.currentRoot;
     this.fileInClipboard = file;
   }
 
@@ -125,10 +131,11 @@ export class FileManagerComponent implements OnInit {
 
   navigate(file: FileElement): void {
     if (file.isFolder) {
+      this.pathHistory.push(this.currentRoot);
       this.currentRoot = file;
       this.files = this.fileService.queryInFolder(file);
       this.currentPath = this.pushToPath(this.currentPath, file.name);
-      this.canNavigateUp = true;
+      console.log(this.pathHistory)
     }
   }
 
@@ -147,19 +154,14 @@ export class FileManagerComponent implements OnInit {
   }
 
   navigateUp(): void {
-    if (this.currentRoot === this.rootFolder) {
-      this.canNavigateUp = false;
-      this.updateFileElementQuery();
-    } else if (this.currentRoot.parent === this.rootFolder.id){
-      this.currentRoot = this.rootFolder;
-      this.canNavigateUp = false;
+    if (this.pathHistory && this.pathHistory.length != 0){
+      this.currentRoot = this.pathHistory.pop();
       this.updateFileElementQuery();
     } else {
-      this.canNavigateUp = true;
-      this.currentRoot = this.fileService.get(this.currentRoot.parent);
-      // console.log(this.currentRoot)
+      this.currentRoot = this.rootFolder;
       this.updateFileElementQuery();
     }
+    console.log(this.pathHistory)
     this.currentPath = this.popFromPath(this.currentPath);
   }
 
@@ -170,5 +172,9 @@ export class FileManagerComponent implements OnInit {
 
   upload() {
     console.log('upload')
+  }
+
+  canNavigate() {
+    return (this.pathHistory && this.pathHistory.length > 0);
   }
 }

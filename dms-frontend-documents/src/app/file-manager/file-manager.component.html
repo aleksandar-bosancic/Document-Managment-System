@@ -1,6 +1,6 @@
 <div class="main-container">
   <mat-toolbar>
-    <button mat-icon-button *ngIf="canNavigateUp" (click)="navigateUp()" matTooltip="Back">
+    <button mat-icon-button *ngIf="canNavigate()" (click)="navigateUp()" matTooltip="Back">
       <mat-icon>arrow_back</mat-icon>
     </button>
     <span style="margin-left: 8px">{{ currentPath || 'Files'}}</span>
