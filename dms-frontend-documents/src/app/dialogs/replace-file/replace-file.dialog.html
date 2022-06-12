@@ -1,0 +1,8 @@
+<mat-dialog-content>
+  <span>File {{fileName}} already exists</span>
+  <span>Replace it?</span>
+  <div class="button-container">
+    <button mat-raised-button color="primary" (click)="response(true)">Yes</button>
+    <button mat-raised-button color="primary" (click)="response(false)">No</button>
+  </div>
+</mat-dialog-content>

@@ -12,6 +12,7 @@ import {RenameRequest} from "../model/rename-request.model";
 import {PathRequest} from "../model/path-request.model";
 import {MoveRequest} from "../model/move-request.model";
 import {FileUploadDialog} from "../dialogs/file-upload/file-upload.dialog";
+import {UserPermissions} from "../model/user-permissions";
 
 @Component({
   selector: 'app-file-manager',
@@ -20,6 +21,9 @@ import {FileUploadDialog} from "../dialogs/file-upload/file-upload.dialog";
 })
 export class FileManagerComponent implements OnInit {
   public columnsBreakpoint: number = 8;
+
+  public userPermissions: any;
+  private user: any;
 
   public files: FileElement[] = [];
   public pathHistory: FileElement[] = [];
@@ -33,8 +37,11 @@ export class FileManagerComponent implements OnInit {
   public currentPath: string = '';
 
   constructor(private http: HttpClient, private fileService: FileService, private dialog: MatDialog, private authService: AuthService) {
+    this.userPermissions = new UserPermissions(false, false, false, false, false, false);
     this.authService.getUser().then((user: User) => {
+      this.user = user;
       this.getFiles(user.attributes.rootDirectory[0])
+      this.userPermissions = this.authService.userPermissions;
     })
   }
 
@@ -97,6 +104,10 @@ export class FileManagerComponent implements OnInit {
   }
 
   removeFile(file: FileElement): void {
+    if (file.folder && this.authService.isClient){
+      alert('Insufficient permissions to remove directory.');
+      return;
+    }
     this.fileService.delete(new PathRequest(file.path!)).subscribe(value => {
       let index = this.currentRoot?.children?.indexOf(file);
       if (index != undefined) {
@@ -204,7 +215,18 @@ export class FileManagerComponent implements OnInit {
   upload() {
     let dialogRef = this.dialog.open(FileUploadDialog);
     dialogRef.componentInstance.path = this.currentPath;
+    dialogRef.componentInstance.root = this.currentRoot;
+    dialogRef.componentInstance.editPermission = this.userPermissions.edit;
     dialogRef.afterClosed().subscribe(value => {
+      if (!value) {
+        return;
+      }
+      if (value === 'canceled') {
+        return;
+      }
+      if (value === 'replaced') {
+        return;
+      }
       if (!this.currentRoot.children) {
         this.currentRoot.children = new Array<FileElement>();
       }
@@ -215,5 +237,36 @@ export class FileManagerComponent implements OnInit {
 
   canNavigate() {
     return (this.pathHistory && this.pathHistory.length > 0);
+  }
+
+  downloadFile(file: FileElement): void {
+    this.fileService.downloadFile(file).subscribe((response) => {
+      let downloadedFile: any = response.body;
+      let a = document.createElement('a');
+      let url = URL.createObjectURL(downloadedFile)
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  canRemove(action: any) {
+    if (this.userPermissions) {
+      switch (action) {
+        case 'remove':
+          return this.userPermissions.remove;
+        case 'edit':
+          return this.userPermissions.edit;
+        case 'download':
+          return this.userPermissions.download;
+        case 'upload':
+          return this.userPermissions.upload;
+        case 'create':
+          return this.userPermissions.create;
+        case 'move':
+          return this.userPermissions.move;
+      }
+    }
   }
 }

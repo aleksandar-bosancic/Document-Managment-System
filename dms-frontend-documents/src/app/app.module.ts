@@ -11,6 +11,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FileManagerComponent } from './file-manager/file-manager.component';
 import { RenameDialogComponent } from './dialogs/rename-dialog/rename-dialog.component';
 import { FileUploadDialog } from './dialogs/file-upload/file-upload.dialog';
+import { ReplaceFileDialog } from './dialogs/replace-file/replace-file.dialog';
 
 
 @NgModule({
@@ -18,7 +19,8 @@ import { FileUploadDialog } from './dialogs/file-upload/file-upload.dialog';
     AppComponent,
     FileManagerComponent,
     RenameDialogComponent,
-    FileUploadDialog
+    FileUploadDialog,
+    ReplaceFileDialog
   ],
   imports: [
     BrowserModule,

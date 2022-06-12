@@ -2,6 +2,7 @@ package com.dms.backend.documents.services;
 
 import com.dms.backend.documents.model.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,6 +21,19 @@ public class FileService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
         return root;
+    }
+
+    public FileElement getRootDirectory(){
+        return fileSystem.getRoot();
+    }
+
+    public void addUserRootDirectory(String name){
+        FileElement userRoot = new FileElement();
+        userRoot.setName(name);
+        userRoot.setFolder(true);
+        userRoot.setPath(name);
+        userRoot.setChildren(new ArrayList<>());
+        fileSystem.getRoot().getChildren().add(userRoot);
     }
 
     public void addFolder(FileElement file) {
@@ -50,7 +64,7 @@ public class FileService {
         temp.getChildren().remove(toDelete);
     }
 
-    private FileElement findFile(FileElement file, String path, boolean parent) {
+    public FileElement findFile(FileElement file, String path, boolean parent) {
         String[] elements;
         if (file != null) {
             elements = file.getPath().split("/");
@@ -119,5 +133,15 @@ public class FileService {
             parent.setChildren(new ArrayList<>());
         }
         parent.getChildren().add(fileElement);
+    }
+
+    public void replaceFile(MultipartFile file, String realPath) throws IOException {
+        FileElement fileElement = findFile(null, realPath, false);
+        fileElement.setFile(file.getBytes());
+    }
+
+    @Scheduled(cron = "*/10 * * * * *")
+    public void serializeFileSystem(){
+        fileSystem.serialize();
     }
 }

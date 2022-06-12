@@ -49,4 +49,27 @@ export class FileService {
       params: params
     });
   }
+
+  downloadFile(file: FileElement) {
+    let regex = /\//g;
+    let params: HttpParams = new HttpParams().set('path', file.path!.replace(regex, '#'));
+
+    return this.http.get('https://localhost:9000/client/file/download', {
+      responseType: 'blob',
+      params: params,
+      observe: 'response'
+    });
+  }
+
+  replaceFile(file: File, path: string) {
+    let regex = /\//g;
+    let params: HttpParams = new HttpParams().set('path', path.replace(regex, '#'));
+    let formData: FormData = new FormData();
+    formData.append('file', file);
+    return this.http.post('https://localhost:9000/client/file/replace', formData, {
+      reportProgress: true,
+      responseType: "json",
+      params: params
+    });
+  }
 }

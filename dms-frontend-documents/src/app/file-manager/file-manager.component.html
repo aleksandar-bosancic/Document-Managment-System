@@ -5,13 +5,13 @@
     </button>
     <span style="margin-left: 8px">{{ currentPath || 'Files'}}</span>
     <span class="spacer"></span>
-    <button mat-icon-button (click)="pasteFile()" matTooltip="Paste">
+    <button mat-icon-button (click)="pasteFile()" matTooltip="Paste" *ngIf="canRemove('move')">
       <mat-icon color="primary">content_paste</mat-icon>
     </button>
-    <button mat-icon-button (click)="addFolder()" matTooltip="New folder">
+    <button mat-icon-button (click)="addFolder()" matTooltip="New folder" *ngIf="canRemove('create')">
       <mat-icon color="primary">create_new_folder</mat-icon>
     </button>
-    <button mat-icon-button (click)="upload()" matTooltip="Upload file">
+    <button mat-icon-button (click)="upload()" matTooltip="Upload file" *ngIf="canRemove('upload')">
       <mat-icon color="primary">cloud_upload</mat-icon>
     </button>
   </mat-toolbar>
@@ -31,23 +31,23 @@
 
 <mat-menu #fileMenu="matMenu" [overlapTrigger]="false">
   <ng-template matMenuContent let-file="file">
-    <button mat-menu-item [matMenuTriggerFor]="moveFileMenu" [matMenuTriggerData]="{self: file}">
+    <button mat-menu-item [matMenuTriggerFor]="moveFileMenu" [matMenuTriggerData]="{self: file}" *ngIf="canRemove('move')">
       <mat-icon>drive_file_move</mat-icon>
       Move
     </button>
-    <button mat-menu-item (click)="removeFile(file)">
+    <button mat-menu-item (click)="removeFile(file)" *ngIf="canRemove('remove')">
       <mat-icon>delete</mat-icon>
       Remove
     </button>
-    <button mat-menu-item (click)="renameFile(file)">
+    <button mat-menu-item (click)="renameFile(file)" *ngIf="canRemove('edit')">
       <mat-icon>edit</mat-icon>
       Rename
     </button>
-    <button mat-menu-item [disabled]="file.isFolder">
+    <button mat-menu-item (click)="downloadFile(file)" [disabled]="file.folder" *ngIf="canRemove('download')">
       <mat-icon>file_download</mat-icon>
       Download
     </button>
-    <button mat-menu-item (click)="cutFile(file)">
+    <button mat-menu-item (click)="cutFile(file)" *ngIf="canRemove('move')">
       <mat-icon>content_cut</mat-icon>
       Cut
     </button>

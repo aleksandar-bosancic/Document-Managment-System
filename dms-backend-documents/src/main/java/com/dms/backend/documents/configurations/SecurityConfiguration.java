@@ -49,7 +49,7 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
 //        http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
         http.csrf().disable();
         http.authorizeRequests()
-                .antMatchers("/test*").hasRole("system-admin")
+                .antMatchers("/admin/*").hasRole("system-admin")
                 .antMatchers("/client/*").hasAnyRole("client", "document-admin", "system-admin")
                 .anyRequest()
                 .permitAll();

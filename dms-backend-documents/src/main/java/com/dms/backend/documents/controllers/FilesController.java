@@ -2,42 +2,42 @@ package com.dms.backend.documents.controllers;
 
 import com.dms.backend.documents.model.*;
 import com.dms.backend.documents.services.FileService;
+import com.dms.backend.documents.services.UtilService;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-
 @RestController
 @RequestMapping("/client")
 public class FilesController {
-    private FileService fileService;
+    private final FileService fileService;
 
 
     FilesController(FileService fileService) {
         this.fileService = fileService;
-        fileService.fileSystem = new FileSystem();
-        FileElement clientDir = new FileElement();
-        clientDir.setName("clientDir");
-        clientDir.setFolder(true);
-        clientDir.setPath("clientDir");
-        FileElement nekidir = new FileElement();
-        nekidir.setName("neki");
-        nekidir.setFolder(true);
-        nekidir.setPath("clientDir/neki");
-        FileElement nekidirdr = new FileElement();
-        nekidirdr.setName("nekidr");
-        nekidirdr.setFolder(true);
-        nekidirdr.setPath("clientDir/neki/nekidr");
-        nekidir.setChildren(new ArrayList<>(List.of(nekidirdr)));
-        clientDir.setChildren(new ArrayList<>(List.of(nekidir)));
-        fileService.fileSystem.getRoot().getChildren().add(clientDir);
+        this.fileService.fileSystem = FileSystem.deserialize();
+        if (fileService.fileSystem == null){
+            this.fileService.fileSystem = new FileSystem();
+        }
+        this.fileService.serializeFileSystem();
+    }
+
+    @GetMapping("/admin/directory/root")
+    public ResponseEntity<FileElement> getRootFile(){
+        FileElement response = fileService.getRootDirectory();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/admin/directory/add-user-root/{name}")
+    public ResponseEntity<HttpStatus> addUserRootDirectory(@PathVariable String name){
+        this.fileService.addUserRootDirectory(name);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/directory/root/{name}")
@@ -80,4 +80,26 @@ public class FilesController {
         }
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @PostMapping("/file/replace")
+    public ResponseEntity<HttpStatus> replaceFile(@RequestParam MultipartFile file, @RequestParam String path){
+        String realPath = path.replaceAll("#", "/");
+        try {
+            fileService.replaceFile(file, realPath);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.EXPECTATION_FAILED);
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/file/download")
+    public ResponseEntity<Resource> downloadFile(@RequestParam String path) {
+        FileElement file = fileService.findFile(null, path.replaceAll("#", "/"), false);
+        Resource resource = new ByteArrayResource(file.getFile());
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, "text/plain");
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(file.getName()).build().toString());
+        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+    }
+
 }
