@@ -9,6 +9,8 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MatDialogModule} from "@angular/material/dialog";
 import {MatInputModule} from "@angular/material/input";
 import {MatTooltipModule} from "@angular/material/tooltip";
+import {MatSelectModule} from "@angular/material/select";
+import {MatTableModule} from "@angular/material/table";
 
 const materialModules = [
   MatButtonModule,
@@ -22,7 +24,8 @@ const materialModules = [
   MatInputModule,
   FormsModule,
   MatTooltipModule,
-
+  MatSelectModule,
+  MatTableModule
 ];
 
 @NgModule({

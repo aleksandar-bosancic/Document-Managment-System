@@ -28,6 +28,9 @@ public class FileService {
     }
 
     public void addUserRootDirectory(String name){
+        if (fileSystem.getRoot().getChildren().stream().filter(fileElement -> fileElement.getName().equals(name)).findAny().orElse(null) != null){
+            return;
+        }
         FileElement userRoot = new FileElement();
         userRoot.setName(name);
         userRoot.setFolder(true);
@@ -74,12 +77,18 @@ public class FileService {
         int counter = 0;
         FileElement currentElement = fileSystem.getRoot();
         for (String s : elements) {
+            if (s.equals("")){
+                continue;
+            }
             counter++;
             if (currentElement.getChildren() == null && counter < elements.length) {
                 return null;
             }
             FileElement temp = currentElement.getChildren().stream()
                     .filter(fileName -> fileName.getName().equals(s)).findAny().orElse(null);
+            if (s.equals("root")){
+                temp = fileSystem.getRoot();
+            }
             if (temp == null && counter < elements.length) {
                 return null;
             } else {
@@ -140,7 +149,7 @@ public class FileService {
         fileElement.setFile(file.getBytes());
     }
 
-    @Scheduled(cron = "*/10 * * * * *")
+    @Scheduled(cron = "*/30 * * * * *")
     public void serializeFileSystem(){
         fileSystem.serialize();
     }

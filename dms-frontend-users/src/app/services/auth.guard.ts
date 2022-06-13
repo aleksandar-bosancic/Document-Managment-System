@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {KeycloakAuthGuard, KeycloakService} from "keycloak-angular";
 import {ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree} from "@angular/router";
 import KeycloakAuthorization from "keycloak-js/dist/keycloak-authz";
+import {AccessDeniedComponent} from "../access-denied/access-denied.component";
 
 @Injectable({
   providedIn: 'root'
@@ -28,6 +29,7 @@ export class AuthGuard extends KeycloakAuthGuard {
     if (requiredRoles.every((role) => this.roles.includes(role))){
       return true;
     } else {
+      this.router.navigate(['access-denied']).then();
       // await this.keycloak.logout('access-denied');
       return false;
     }

@@ -14,8 +14,12 @@ export class FileService {
   constructor(private http: HttpClient) {
   }
 
+  getAdminRoot(){
+    return this.http.get('https://localhost:9000/admin/directory/root');
+  }
+
   getFiles(userDir: string) {
-    return this.http.get('https://localhost:9000/client/directory/root/' + userDir);
+    return this.http.get('https://localhost:9000/client/directory/root/' + userDir, {observe: 'response'});
   }
 
   add(folder: FileElement) {

@@ -27,6 +27,7 @@ export class AuthGuard extends KeycloakAuthGuard {
     if (requiredRoles.every((role) => this.roles.includes(role))){
       return true;
     } else {
+      this.router.navigate(['access-denied']).then();
       // await this.keycloak.logout('access-denied');
       return false;
     }

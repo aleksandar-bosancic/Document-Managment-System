@@ -6,11 +6,13 @@ import { HomeComponent } from './home/home.component';
 import {AppMaterialModule} from "../app-material/app-material.module";
 import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
 import {KeycloakBearerInterceptor} from "keycloak-angular";
+import { AccessDeniedComponent } from '../access-denied/access-denied.component';
 
 
 @NgModule({
     declarations: [
-        HomeComponent
+        HomeComponent,
+        AccessDeniedComponent
     ],
     imports: [
         CommonModule,

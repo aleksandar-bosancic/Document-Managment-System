@@ -10,13 +10,14 @@ import java.util.Arrays;
 
 @Service
 public class UserService {
-    public static final String ROLES_URL = "https://localhost:8443/admin/realms/dms/roles/";
+    public static final String USER_BY_USERNAME = "https://localhost:8443/admin/realms/dms/users?username=";
+    public static final String EXACT = "&exact=true";
     public static final String USERS_URL = "https://localhost:8443/admin/realms/dms/users/";
     public static final String GROUPS_URL = "https://localhost:8443/admin/realms/dms/groups/";
     public static final String CLIENT_USERS = "application-client";
     public static final String SYSTEM_ADMIN_USERS = "application-system-admin";
     public static final String DOCUMENT_ADMIN_USERS = "application-document-admin";
-    KeycloakRestTemplate keycloakRestTemplate;
+    public KeycloakRestTemplate keycloakRestTemplate;
 
     UserService(KeycloakRestTemplate keycloakRestTemplate) {
         this.keycloakRestTemplate = keycloakRestTemplate;
@@ -41,7 +42,7 @@ public class UserService {
         }
     }
 
-    public void addUser(AddUser user) {
+    public User addUser(AddUser user) {
         AddUserRequest request = new AddUserRequest();
         request.setUsername(user.getUsername());
         request.setEmail(user.getEmail());
@@ -53,13 +54,15 @@ public class UserService {
         credentials.setValue(user.getUsername());
         Credentials[] cred = {credentials};
         request.setCredentials(cred);
-        System.out.println(request);
         try {
-            keycloakRestTemplate.postForObject(USERS_URL, request, HttpStatus.class);
+            keycloakRestTemplate.postForEntity(USERS_URL, request, User.class);
+            User[] created = keycloakRestTemplate.getForEntity(USER_BY_USERNAME + user.getUsername() + EXACT, User[].class).getBody();
+            assert created != null;
+            return created[0];
+
         } catch (Exception ignored) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-
     }
 
     public void updateUser(User user) {

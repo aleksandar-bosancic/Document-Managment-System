@@ -1,4 +1,4 @@
-package com.dms.backend.users.model;
+package com.dms.backend.documents.model;
 
 import lombok.Data;
 

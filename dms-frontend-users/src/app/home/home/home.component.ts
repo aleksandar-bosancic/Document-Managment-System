@@ -25,7 +25,7 @@ export class HomeComponent implements OnInit {
   public dataSource: User[] = [];
 
   public userRoles: string[] = ['application-client', 'application-document-admin', 'application-system-admin'];
-  public userActions: string[] = ['create', 'remove', 'move', 'rename', 'upload', 'download', 'edit'];
+  public userActions: string[] = ['download', 'edit','remove', 'upload'];
   public displayedColumns: string[] = ['username', 'firstName', 'lastName', 'email'];
 
   clientFormGroup: FormGroup = new FormGroup({});
@@ -46,7 +46,7 @@ export class HomeComponent implements OnInit {
       lastName: [null],
       email: [null],
       rootDirectory: [null],
-      allowedDomains: ['*'],
+      domainInput: [null],
       actions: [null]
     })
   }
@@ -94,24 +94,26 @@ export class HomeComponent implements OnInit {
       user.lastName = form.controls['lastName'].value;
       user.email = form.controls['email'].value;
       let rootDirectory = form.controls['rootDirectory'].value;
-      let allowedDomains = form.controls['allowedDomains'].value;
+      let allowedDomain = form.controls['domainInput'].value;
       let actions = form.controls['actions'].value;
       if (rootDirectory != null){
         if (!!rootDirectory[0]) {
           let dirArray= [];
           dirArray[0] = rootDirectory;
           user.attributes.rootDirectory = dirArray;
+          this.service.addRootDir(dirArray[0]).subscribe();
         }
       }
-      if (allowedDomains){
+      if (!!allowedDomain[0]){
         let domainsArray = [];
-        domainsArray = allowedDomains.trim().split(/[\r\n]+/);
+        domainsArray[0] = allowedDomain;
         user.attributes.allowedDomains = domainsArray;
       }
       if (actions){
         user.attributes.actions = actions;
       }
       this.service.updateUser(this.selectedUser.selected[0]).subscribe();
+      this.clear();
       this.loadUsers();
     } else {
       alert('User not selected.');
@@ -142,12 +144,7 @@ export class HomeComponent implements OnInit {
       form.controls['rootDirectory'].setValue(selected.attributes.rootDirectory[0]);
     }
     if (selected.attributes.allowedDomains != undefined) {
-      let domains = selected.attributes.allowedDomains;
-      let domainsString = "";
-      domains.forEach(domain => {
-        domainsString += domain + '\n';
-      });
-      form.controls['allowedDomains'].setValue(domainsString);
+      form.controls['domainInput'].setValue(selected.attributes.allowedDomains[0]);
     }
     if (selected.attributes.actions != undefined) {
       let actions = selected.attributes.actions;
@@ -171,7 +168,7 @@ export class HomeComponent implements OnInit {
     let lastName = form.controls['lastName'].value;
     let email = form.controls['email'].value;
     let rootDirectory = form.controls['rootDirectory'].value;
-    let allowedDomains = form.controls['allowedDomains'].value;
+    let allowedDomains = form.controls['domainInput'].value;
     let actions = form.controls['actions'].value;
     if (this.selectedUser.selected[0] != null) {
       alert('Can not add user while existing user is selected.');
@@ -190,13 +187,12 @@ export class HomeComponent implements OnInit {
     let rootDirArray = [];
     let actionsArray = actions;
     rootDirArray[0] = rootDirectory;
-    if (allowedDomains != null && allowedDomains.length === 0) {
-      domainsArray = allowedDomains.trim().split(/[\r\n]+/);
-    } else {
-      domainsArray[0] = '\*'
-    }
+    domainsArray[0] = allowedDomains;
     let attributes = new Attribute(rootDirArray, domainsArray, actionsArray);
     this.service.addUser(new AddUser(username, firstName, lastName, email, role, attributes)).subscribe();
+    if (rootDirectory != null && rootDirectory != ''){
+      this.service.addRootDir(rootDirectory).subscribe();
+    }
   }
 
   roleChanged(role: string) {
@@ -205,21 +201,21 @@ export class HomeComponent implements OnInit {
         this.selectedUserList = this.clients;
         this.dataSource = this.clients;
         this.clientFormGroup.get('actions')?.enable()
-        this.clientFormGroup.get('allowedDomains')?.enable()
+        this.clientFormGroup.get('domainInput')?.enable()
         this.clientFormGroup.get('rootDirectory')?.enable()
         break;
       case 'application-document-admin':
         this.selectedUserList = this.documentAdmins;
         this.dataSource = this.documentAdmins;
         this.clientFormGroup.get('actions')?.disable()
-        this.clientFormGroup.get('allowedDomains')?.disable()
+        this.clientFormGroup.get('domainInput')?.disable()
         this.clientFormGroup.get('rootDirectory')?.enable()
         break;
       case 'application-system-admin':
         this.selectedUserList = this.systemAdmins;
         this.dataSource = this.systemAdmins;
         this.clientFormGroup.get('actions')?.disable()
-        this.clientFormGroup.get('allowedDomains')?.disable()
+        this.clientFormGroup.get('domainInput')?.disable()
         this.clientFormGroup.get('rootDirectory')?.disable()
         break;
     }

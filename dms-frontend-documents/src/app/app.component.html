@@ -1,5 +1,6 @@
 <mat-toolbar class="toolbar" color="primary">
   <div>
+    <button mat-flat-button color="accent" (click)="logs()" *ngIf="authService.isAdmin">Logs</button>
   </div>
   <div>
     <h2>DMS ADMINISTRATION</h2>
@@ -10,4 +11,4 @@
     </button>
   </div>
 </mat-toolbar>
-<app-file-manager style="height: 100%"></app-file-manager>
+<router-outlet style="height: 100%"></router-outlet>

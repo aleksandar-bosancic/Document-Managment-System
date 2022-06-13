@@ -46,11 +46,12 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
-//        http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+//        http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());;
         http.csrf().disable();
         http.authorizeRequests()
-                .antMatchers("/admin/*").hasRole("system-admin")
-                .antMatchers("/client/*").hasAnyRole("client", "document-admin", "system-admin")
+                .antMatchers("/admin/**").hasRole("system-admin")
+                .antMatchers("/client/**").hasAnyRole("client", "document-admin", "system-admin")
+                .antMatchers("/logs/**").hasAnyRole("client", "document-admin", "system-admin")
                 .anyRequest()
                 .permitAll();
     }

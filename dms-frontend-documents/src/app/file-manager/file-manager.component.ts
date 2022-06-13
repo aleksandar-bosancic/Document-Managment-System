@@ -3,7 +3,6 @@ import {MatMenuTrigger} from "@angular/material/menu";
 import {HttpClient} from "@angular/common/http";
 import {FileService} from "../services/file.service";
 import {FileElement} from "../model/file-element.model";
-import {v4 as uuid} from "uuid";
 import {MatDialog} from "@angular/material/dialog";
 import {RenameDialogComponent} from "../dialogs/rename-dialog/rename-dialog.component";
 import {AuthService} from "../services/auth.service";
@@ -13,6 +12,9 @@ import {PathRequest} from "../model/path-request.model";
 import {MoveRequest} from "../model/move-request.model";
 import {FileUploadDialog} from "../dialogs/file-upload/file-upload.dialog";
 import {UserPermissions} from "../model/user-permissions";
+import {LogService} from "../services/log.service";
+import {Log} from "../model/log.model";
+import {Router} from "@angular/router";
 
 @Component({
   selector: 'app-file-manager',
@@ -36,23 +38,41 @@ export class FileManagerComponent implements OnInit {
 
   public currentPath: string = '';
 
-  constructor(private http: HttpClient, private fileService: FileService, private dialog: MatDialog, private authService: AuthService) {
+  constructor(private http: HttpClient, private fileService: FileService, private dialog: MatDialog, private authService: AuthService,
+              private logService: LogService, private router: Router) {
     this.userPermissions = new UserPermissions(false, false, false, false, false, false);
     this.authService.getUser().then((user: User) => {
       this.user = user;
-      this.getFiles(user.attributes.rootDirectory[0])
+      if (this.authService.isAdmin) {
+        this.getFiles('root');
+      } else {
+        this.getFiles(user.attributes.rootDirectory[0])
+      }
       this.userPermissions = this.authService.userPermissions;
     })
   }
 
   getFiles(userDir: string) {
-    // @ts-ignore
-    this.fileService.getFiles(userDir).subscribe((result: FileElement) => {
-      this.rootFolder = result;
-      this.currentRoot = this.rootFolder;
-      this.files = result.children!;
-      this.currentPath = this.rootFolder.name + '/';
-    })
+    if (userDir === 'root') {
+      this.fileService.getAdminRoot().subscribe((value: any) => {
+        this.rootFolder = value;
+        this.currentRoot = this.rootFolder;
+        this.files = this.rootFolder.children;
+        this.currentPath = 'root/';
+      })
+    } else {
+      // @ts-ignore
+      this.fileService.getFiles(userDir).subscribe((result: any) => {
+        this.rootFolder = result.body;
+        this.currentRoot = this.rootFolder;
+        this.files = this.rootFolder.children!;
+        this.currentPath = this.rootFolder.name + '/';
+      }, (error: any) => {
+        alert('Error:  ' + error.error.message);
+        this.authService.logout();
+        this.router.navigate(['']).then();
+      })
+    }
   }
 
   ngOnInit(): void {
@@ -88,15 +108,14 @@ export class FileManagerComponent implements OnInit {
           alert('Name already exists');
         } else {
           let tmp = new FileElement(true, res);
-          console.log(this.currentPath)
           tmp.path = ((this.currentPath) ? this.currentPath : this.rootFolder.name) + res;
-          console.log(tmp.path)
           this.fileService.add(tmp).subscribe(value => {
             if (!this.currentRoot.children) {
               this.currentRoot.children = new Array<FileElement>();
             }
             this.currentRoot.children.push(tmp);
             this.updateFileElementQuery();
+            this.logService.addLog(new Log(Date.now().toString(), this.user.username, 'add-folder', tmp.name));
           });
         }
       }
@@ -104,7 +123,7 @@ export class FileManagerComponent implements OnInit {
   }
 
   removeFile(file: FileElement): void {
-    if (file.folder && this.authService.isClient){
+    if (file.folder && this.authService.isClient) {
       alert('Insufficient permissions to remove directory.');
       return;
     }
@@ -113,6 +132,7 @@ export class FileManagerComponent implements OnInit {
       if (index != undefined) {
         this.currentRoot?.children?.splice(index, 1);
       }
+      this.logService.addLog(new Log(Date.now().toString(), this.user.username, 'remove-file', file.name));
       this.updateFileElementQuery();
     });
   }
@@ -128,6 +148,7 @@ export class FileManagerComponent implements OnInit {
         this.move(this.fileInClipboard, this.currentRoot, this.parentOfCutFile);
         this.fileInClipboard = null;
         this.parentOfCutFile = null;
+        this.logService.addLog(new Log(Date.now().toString(), this.user.username, 'move-file', this.fileInClipboard.name));
         this.updateFileElementQuery();
       })
     }
@@ -136,6 +157,7 @@ export class FileManagerComponent implements OnInit {
   moveFile(file: FileElement, destinationFolder: FileElement): void {
     this.fileService.move(new MoveRequest(file.path!, destinationFolder.path!)).subscribe(value => {
       this.move(file, destinationFolder, this.currentRoot);
+      this.logService.addLog(new Log(Date.now().toString(), this.user.username, 'move-file', file.name));
       this.updateFileElementQuery();
     })
   }
@@ -162,6 +184,7 @@ export class FileManagerComponent implements OnInit {
         } else {
           this.fileService.update(new RenameRequest(file.path!, res)).subscribe(value => {
             file.name = res;
+            this.logService.addLog(new Log(Date.now().toString(), this.user.username, 'rename-file', file.name));
           });
           this.updateFileElementQuery();
         }
@@ -183,13 +206,21 @@ export class FileManagerComponent implements OnInit {
   }
 
   pushToPath(path: string, folderName: string): string {
-    let tempPath = path ? path : this.rootFolder.name + '/';
+    let rootName = this.rootFolder.name;
+    // if (this.rootFolder.name === 'root'){
+    //   rootName = '';
+    // }
+    let tempPath = path ? path : rootName + '/';
     tempPath += `${folderName}/`;
     return tempPath;
   }
 
   popFromPath(path: string): string {
-    let tempPath = path ? path : this.rootFolder.name + '/';
+    let rootName = this.rootFolder.name;
+    if (this.rootFolder.name === 'root'){
+      rootName = '';
+    }
+    let tempPath = path ? path : rootName + '/';
     let split = tempPath.split('/');
     split.splice(split.length - 2, 1);
     tempPath = split.join('/');
@@ -231,6 +262,7 @@ export class FileManagerComponent implements OnInit {
         this.currentRoot.children = new Array<FileElement>();
       }
       this.currentRoot.children.push(value);
+      this.logService.addLog(new Log(Date.now().toString(), this.user.username, 'upload-file', value.name));
       this.updateFileElementQuery();
     });
   }
@@ -248,6 +280,7 @@ export class FileManagerComponent implements OnInit {
       a.download = file.name;
       a.click();
       URL.revokeObjectURL(url);
+      this.logService.addLog(new Log(Date.now().toString(), this.user.username, 'move-file', file.name));
     });
   }
 

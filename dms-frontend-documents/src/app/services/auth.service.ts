@@ -11,6 +11,7 @@ export class AuthService {
   public user: any;
   public userPermissions: any;
   public isClient: boolean = true;
+  public isAdmin: boolean = false;
 
   constructor(private keycloakService: KeycloakService) {
   }
@@ -36,6 +37,7 @@ export class AuthService {
       this.userPermissions = userPermissions;
     } else if (this.keycloakService.getUserRoles().find(value => value === 'application-system-admin')){
       this.isClient = false;
+      this.isAdmin = true;
       userPermissions = new UserPermissions(true, true, true, true, true, true);
       this.userPermissions = userPermissions;
     } else {

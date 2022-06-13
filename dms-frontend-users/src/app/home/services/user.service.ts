@@ -16,23 +16,22 @@ export class UserService {
   }
 
   updateUser(user: User) {
-    const csrfToken = document.cookie.replace(/(?:^|.*;\s*)XSRF-TOKEN\s*=\s*([^;]*).*$|^.*$/, '$1');
-    return this.http.put('https://localhost:9001/admin/users/update', user, {headers: {'X-XSRF-TOKEN': csrfToken}});
+    return this.http.put('https://localhost:9001/admin/users/update', user);
   }
 
   deleteUser(user: User) {
-    const csrfToken = document.cookie.replace(/(?:^|.*;\s*)XSRF-TOKEN\s*\=\s*([^;]*).*$|^.*$/, '$1');
-    return this.http.delete('https://localhost:9001/admin/users/delete/' + user.id, {headers: {'X-XSRF-TOKEN': csrfToken}});
+    return this.http.delete('https://localhost:9001/admin/users/delete/' + user.id);
   }
 
   addUser(addUser: AddUser) {
-    const csrfToken = document.cookie.replace(/(?:^|.*;\s*)XSRF-TOKEN\s*=\s*([^;]*).*$|^.*$/, '$1');
-    // console.log(csrfToken)
-    return this.http.post('https://localhost:9001/admin/users/add', addUser, {headers: {'X-XSRF-TOKEN': csrfToken}});
+    return this.http.post('https://localhost:9001/admin/users/add', addUser);
   }
 
   resetPassword(user: User) {
-    const csrfToken = document.cookie.replace(/(?:^|.*;\s*)XSRF-TOKEN\s*=\s*([^;]*).*$|^.*$/, '$1');
-    return this.http.put('https://localhost:9001/admin/users/reset', user,{headers: {'X-XSRF-TOKEN': csrfToken}});
+    return this.http.put('https://localhost:9001/admin/users/reset', user);
+  }
+
+  addRootDir(dirArrayElement: string) {
+    return this.http.post('https://localhost:9000/admin/directory/add-user-root/' + dirArrayElement, null);
   }
 }

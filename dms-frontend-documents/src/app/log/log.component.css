@@ -1,0 +1,15 @@
+.main-container{
+  width: 100%;
+  height: 80%;
+  display: flex;
+  flex-direction: column;
+}
+
+.mat-form-field{
+  margin: 30px;
+  width: 200px;
+}
+
+.mat-table{
+  margin: 30px;
+}

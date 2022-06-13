@@ -12,6 +12,9 @@ import { FileManagerComponent } from './file-manager/file-manager.component';
 import { RenameDialogComponent } from './dialogs/rename-dialog/rename-dialog.component';
 import { FileUploadDialog } from './dialogs/file-upload/file-upload.dialog';
 import { ReplaceFileDialog } from './dialogs/replace-file/replace-file.dialog';
+import {DatePipe} from "@angular/common";
+import { LogComponent } from './log/log.component';
+import { AccessDeniedComponent } from './access-denied/access-denied.component';
 
 
 @NgModule({
@@ -20,7 +23,9 @@ import { ReplaceFileDialog } from './dialogs/replace-file/replace-file.dialog';
     FileManagerComponent,
     RenameDialogComponent,
     FileUploadDialog,
-    ReplaceFileDialog
+    ReplaceFileDialog,
+    LogComponent,
+    AccessDeniedComponent
   ],
   imports: [
     BrowserModule,
@@ -28,9 +33,11 @@ import { ReplaceFileDialog } from './dialogs/replace-file/replace-file.dialog';
     AppRoutingModule,
     KeycloakAngularModule,
     HttpClientModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    AppMaterialModule,
   ],
   providers: [
+    DatePipe,
     {
       provide: APP_INITIALIZER,
       useFactory: initializeKeycloak,
